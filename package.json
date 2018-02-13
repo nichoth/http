@@ -1,0 +1,32 @@
+{
+  "dependencies": {
+    "url-join": "^4.0.0",
+    "xtend": "^4.0.1"
+  },
+  "name": "@nichoth/http",
+  "version": "0.0.0",
+  "description": "Helper for making http calls",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node example/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nichoth/http.git"
+  },
+  "keywords": [
+    "http",
+    "request",
+    "xhr"
+  ],
+  "author": "nichoth",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nichoth/http/issues"
+  },
+  "homepage": "https://github.com/nichoth/http#readme"
+}
