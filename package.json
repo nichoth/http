@@ -6,16 +6,21 @@
   "directories": {
     "example": "example"
   },
-  "devDependencies": {},
+  "browser": {
+    "request": "xhr"
+  },
   "scripts": {
     "preversion": "npm test",
     "postversion": "git push && git push --tags",
     "test": "node example/index.js"
   },
   "dependencies": {
+    "request": "^2.83.0",
     "url-join": "^4.0.0",
+    "xhr": "^2.4.1",
     "xtend": "^4.0.1"
   },
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nichoth/http.git"
