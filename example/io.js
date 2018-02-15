@@ -1,22 +1,24 @@
-var Io = require('../io').Io
-var io = Io(mockReq)
+var Io = require('../io')
 var assert = require('assert')
 
-var myRequest = io({ body: 'hello' })
-assert.equal(typeof io, 'function')
+var hello = Io({ body: 'hello' }, mockReq)
+    .map(function woo (err, res, body) {
+        if (err) return [err]
+        return [null, body + '!!!']
+    })
+    .send(function (err, res) {
+        assert.equal(err, null)
+        assert.equal(res, 'hello world!!!')
+        console.log('hello response --- ', err, res)
+    })
 
-myRequest(function onResponse (err, res, body) {
-    console.log('here', arguments)
+var hey = Io({}, mockReq)
+hey.send('hey', function (err, res, body) {
+    assert.equal(err, null)
+    assert.equal(body, 'hey world')
+    console.log('hey response --- ', err, res, body)
 })
 
-var woo = io.map(function (err, res, body) {
-    if (err) return [err]
-    return [null, body + '!!!']
-})
-
-woo(myRequest)(function onResponse (err, res) {
-    console.log('woo', res)
-})
 
 // ------------------------
 

@@ -1,31 +1,39 @@
+var xtend = require('xtend')
 var request = require('request')
 
-function Io (req) {
-    function io (data, cb) {
-        if (!cb) return function (_cb) {
-            return io(data, _cb)
-        }
-        return req(data, cb)
+function Io (data, _request) {
+    if (!(this instanceof Io)) return new Io(data, _request)
+    this.reqData = data
+    this.xhr = _request || request
+    this._map = function noop (err, res, body) {
+        return [err, res, body]
     }
-
-    function map (predicate, fn) {
-        if (!fn) {
-            return function (_fn) {
-                return map(predicate, _fn)
-            }
-        }
-
-        return function (cb) {
-            fn(function (err, res, body) {
-                cb.apply(null, predicate(err, res, body))
-            })
-        }
-    }
-
-    io.map = map
-    return io
 }
 
-module.exports = Io(request)
-module.exports.Io = Io  // this is for testing
+Io.prototype.map = function (predicate) {
+    this._map = predicate
+    return this
+}
+
+Io.prototype.send = function (data, cb) {
+    if (typeof data === 'function') {
+        cb = data
+        data = null
+    }
+
+    var req = xtend(this.reqData || {}, {
+        body: data && typeof data === 'object' ?
+            xtend(this.reqData.body || {}, data) :
+            this.reqData.body
+    })
+    if (data && typeof data !== 'object') req.body = data
+    var self = this
+    this.xhr(req, function (err, res, body) {
+        cb.apply(null, self._map(err, res, body))
+    })
+
+    return this
+}
+
+module.exports = Io
 
