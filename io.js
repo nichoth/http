@@ -1,13 +1,15 @@
 var xtend = require('xtend')
+var inherits = require('inherits')
 var request = require('request')
 
 function Io (data, _request) {
     if (!(this instanceof Io)) return new Io(data, _request)
     this.reqData = data
     this.xhr = _request || request
-    this._map = function noop (err, res, body) {
-        return [err, res, body]
-    }
+}
+
+Io.prototype._map = function noop (err, res, body) {
+    return [err, res, body]
 }
 
 Io.prototype.map = function (predicate) {
@@ -33,6 +35,16 @@ Io.prototype.send = function (data, cb) {
     })
 
     return this
+}
+
+Io.map = function (predicate) {
+    function ExtendedIo (data, _xhr) {
+        if (!(this instanceof ExtendedIo)) return new ExtendedIo(data, _xhr)
+        Io.call(this, data, _xhr)
+    }
+    ExtendedIo.prototype._map = predicate
+    inherits(ExtendedIo, Io)
+    return ExtendedIo
 }
 
 module.exports = Io

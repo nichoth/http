@@ -19,6 +19,17 @@ hey.send('hey', function (err, res, body) {
     console.log('hey response --- ', err, res, body)
 })
 
+// inherit from this, but override the response map
+var IoChild = Io.map(function (err, res, body) {
+    if (err) return [err]
+    return [null, 'ok']
+})
+
+IoChild({}, mockReq)
+    .send(function (err, res) {
+        assert.equal(res, 'ok')
+        console.log('here', err, res)
+    })
 
 // ------------------------
 
