@@ -1,50 +1,42 @@
-var xtend = require('xtend')
-var inherits = require('inherits')
 var request = require('request')
 
-function Io (data, _request) {
-    if (!(this instanceof Io)) return new Io(data, _request)
-    this.reqData = data
-    this.xhr = _request || request
+// pass in _request just so we can test
+function Io (data, cb, _request) {
+    var xhr = _request || request
+    if (!cb) {
+        function io (_cb) {
+            return Io(data, _cb)
+        }
+        io.map = Io.map
+        return io
+    }
+    xhr(data, cb)
 }
 
-Io.prototype._map = function noop (err, res, body) {
-    return [err, res, body]
-}
-
-Io.prototype.map = function (predicate) {
-    this._map = predicate
-    return this
-}
-
-Io.prototype.send = function (data, cb) {
-    if (typeof data === 'function') {
-        cb = data
-        data = null
+Io.map = function (predicate, _request) {
+    function io (data, cb) {
+        Io(data, function onResponse (err, res, body) {
+            var res = io.predicates.reduce(function (prev, fn) {
+                var res = fn.apply(fn, prev || [err, res, body])
+                return res
+            }, null)
+            cb.apply(cb, res)
+        }, _request)
     }
 
-    var req = xtend(this.reqData || {}, {
-        body: data && typeof data === 'object' ?
-            xtend(this.reqData.body || {}, data) :
-            this.reqData.body
-    })
-    if (data && typeof data !== 'object') req.body = data
-    var self = this
-    this.xhr(req, function (err, res, body) {
-        cb.apply(null, self._map(err, res, body))
-    })
+    addPredicate(io, predicate)
 
-    return this
+    io.map = function (_predicate) {
+        addPredicate(io, _predicate)
+        return io
+    }
+
+    return io
 }
 
-Io.map = function (predicate) {
-    function ExtendedIo (data, _xhr) {
-        if (!(this instanceof ExtendedIo)) return new ExtendedIo(data, _xhr)
-        Io.call(this, data, _xhr)
-    }
-    ExtendedIo.prototype._map = predicate
-    inherits(ExtendedIo, Io)
-    return ExtendedIo
+function addPredicate (io, fn) {
+    io.predicates = io.predicates || []
+    io.predicates.push(fn)
 }
 
 module.exports = Io

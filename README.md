@@ -63,69 +63,31 @@ assert.deepEqual(_data, {
 ```
 
 ### IO
-
-This part feels a bit janky, but not totally sure why. Something about the use of instances here. You wouldn't want to pass around an `io` instance, because any call to `.map` will change the response parser for any other calls to `.send` on that instance. That's ok, but maybe not the clearest thing. 
-
-Also, what are we doing here? This is mixing two ideas. One is using an io module to handle the request data returned from `index.js`. The other is to bundle the io with the data to make things easier to consume. If we're doing the former, then we want something as small as possilbe, but for the latter we want to add lines of code if it makes it easier to consume.
+Make an http request an map the response
 
 ```js
 var Io = require('../io')
-var assert = require('assert')
 
-// pass in initial request data like headers and stuff
-// you can add more to the body in the `.send` method
-var hello = Io({ body: 'hello' }, mockReq)
-    // map the response
-    .map(function woo (err, res, body) {
+// create a new function that calls the given predicates with the response
+var io = Io
+    .map(function (err, res, body) {
         if (err) return [err]
-        return [null, body + '!!!']
+        return [null, body.data]
     })
-    // this cb gets the mapped response
-    .send(function (err, res) {
-        assert.equal(err, null)
-        assert.equal(res, 'hello world!!!')
-        console.log('hello response --- ', err, res)
+    .map(function (err, res) {
+        if (err) return [err]
+        return [null, res.foo]
     })
 
-// send a request without mapping the response
-var hey = Io({}, mockReq)
-
-// pass in data that should xtend/override the request body
-// if an object is passed in it will shallow extend the existing body
-// if it is a primitive value then it will override the body
-hey.send('hey', function (err, res, body) {
-    assert.equal(err, null)
-    assert.equal(body, 'hey world')
-    console.log('hey response --- ', err, res, body)
+io({
+    url: 'example.com',
+    method: 'POST',
+    body: { hello: 'world' },
+    json: true
+}, function onResponse (err, res) {
+    // the arguments here have been mapped by the predicates above
+    // res === body.data.foo
 })
-
-// inherit from Io and add a different map method to the new prototype
-var IoChild = Io.map(function (err, res, body) {
-    if (err) return [err]
-    return [null, 'ok']
-})
-
-IoChild({}, mockReq)
-    .send(function (err, res) {
-        assert.equal(res, 'ok', 'should map via prototype method')
-    })
-
-IoChild({}, mockReq)
-    .map(function (ree, res, body) {
-        return [null, 'test']
-    })
-    .send(function (err, res) {
-        assert.equal(res, 'test', 'should map via instance method')
-    })
-
-
-// ------------------------
-
-function mockReq (data, cb) {
-    process.nextTick(function () {
-        var res = data.body + ' world'
-        cb(null, { body: res }, res)
-    })
-}
 ```
+
 
